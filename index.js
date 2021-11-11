@@ -42,13 +42,7 @@ async function run() {
             res.send(services);
         });
         
-        // //GET API for Explore
-        // app.get('/services', async (req, res) => {
-        //     const cursor = BookingCollection.find({}).limit(6);
-        //     const services = await cursor.toArray();
-        //     res.send(services);
-        // });
-
+        
         // GET Single Service id
         app.get('/services/:id', async (req, res) => {
             const id = req.params.id;
@@ -65,7 +59,7 @@ async function run() {
             res.json(result);
         })
 
-         // show my Bookings
+         // show my all  Purchase
         app.get('/Bookings', async (req, res) => {
             const cursor = orderCollection.find({});
             const product = await cursor.toArray();
