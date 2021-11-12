@@ -24,14 +24,22 @@ async function run() {
         const BookingCollection = database.collection('services');
         const orderCollection = database.collection("bookings");
         const reviewCollection = database.collection("review");
+        const usersCollection = database.collection("users");
 
 
-        //post api for services insert
+        //post api for reviews insert
         app.post('/review', async (req, res) => {
             const review = req.body;
             const result = await reviewCollection.insertOne(review);
             console.log(result);
             res.json(result)
+        });
+        
+        //GET ALL Review 
+        app.get('/review', async (req, res) => {
+            const cursor = reviewCollection.find({});
+            const review = await cursor.toArray();
+            res.send(review);
         });
 
 
@@ -52,22 +60,38 @@ async function run() {
             res.json(service);
         })
 
-        // Add Bookings API
+        // Add orders from purchase
         app.post('/orders', async (req, res) => {
             const orders = req.body;
             const result = await orderCollection.insertOne(orders);
             res.json(result);
         })
+        // My orders
+        app.get("/orders/:email", async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const result = await ordersCollection.find(filter).toArray();
+            res.send(result);
+          });
+        
+        
+        
+        // add post for registration
+        app.post('/users', async (req, res) => {
+            const users = req.body;
+            const result = await usersCollection.insertOne(users);
+            res.json(result);
+        })
 
-         // show my all  Purchase
-        app.get('/Bookings', async (req, res) => {
+         // show my all maruti Purchase
+        app.get('/orders', async (req, res) => {
             const cursor = orderCollection.find({});
             const product = await cursor.toArray();
             res.send(product);
         });
 
          // cancel an Booking
-        app.delete('/Bookings/:id', async (req, res) => {
+        app.delete('/orders/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await orderCollection.deleteOne(query);
