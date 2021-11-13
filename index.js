@@ -27,6 +27,8 @@ async function run() {
     const orderCollection = database.collection("bookings");
     const reviewCollection = database.collection("review");
     const usersCollection = database.collection("users");
+    // const ordersCollection = database.collection("orders");
+    
 
     //post api for reviews insert
     app.post("/review", async (req, res) => {
@@ -41,6 +43,21 @@ async function run() {
       const cursor = reviewCollection.find({});
       const review = await cursor.toArray();
       res.send(review);
+    });
+
+    //post api for insert Order
+    app.post("/addOrder", async (req, res) => {
+      const result = await orderCollection.insertOne(req.body);
+      console.log(result);
+      res.send(result);
+    });
+    //GET ALL My Orders
+    app.get("/orders/:email", async (req, res) => {
+      console.log(req.params.email);
+      const result = await orderCollection
+        .find({ email: req.params.email })
+        .toArray();
+      res.send(result);
     });
 
     //GET API for Home
@@ -74,24 +91,53 @@ async function run() {
     });
 
     // add post for registration
-    app.post("/users", async (req, res) => {
-      const users = req.body;
-      const result = await usersCollection.insertOne(users);
-      res.json(result);
-    });
-    //upsert
-    
+    // app.post("/users", async (req, res) => {
+    //   const users = req.body;
+    //   const result = await usersCollection.insertOne(users);
+    //   res.json(result);
+    // });
 
-    // app put for admin
-    app.put("/users/admin", async (req, res) => {
-      const user = req.body;
-      const filter ={email:user.email};
-      const updateDoc={$set:{role:'admin'}};
-      const result=await usersCollection.updateOne(filter, updateDoc, options);
-      res.json(result);
+    app.post("/addUserInfo", async (req, res) => {
+      console.log("req.body");
+      const result = await usersCollection.insertOne(req.body);
+      res.send(result);
+      console.log(result);
     });
+    //  make admin
 
-    // show my all maruti Purchase
+  app.put("/makeAdmin", async (req, res) => {
+    const filter = { email: req.body.email };
+    const result = await usersCollection.find(filter).toArray();
+    if (result) {
+      const documents = await usersCollection.updateOne(filter, {
+        $set: { role: "admin" },
+      });
+      console.log(documents);
+    }
+  });
+   // check admin or not
+  app.get("/checkAdmin/:email", async (req, res) => {
+    const result = await usersCollection
+      .find({ email: req.params.email })
+      .toArray();
+    console.log(result);
+    res.send(result);
+  }); 
+
+    // admin make users to admin
+    // app.get("/users/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = { email: email };
+    //   const user = await usersCollection.findOne(query);
+    //   let isAdmin = false;
+
+    //   if (user?.role === "admin") {
+    //     isAdmin = true;
+    //   }
+    //   res.json({ admin: isAdmin });
+    // });
+
+    // show my all car Purchase
     app.get("/orders", async (req, res) => {
       const cursor = orderCollection.find({});
       const product = await cursor.toArray();
