@@ -23,7 +23,7 @@ async function run() {
     await client.connect();
     console.log("connect to database");
     const database = client.db("maruti");
-    const BookingCollection = database.collection("services");
+    const servicesCollection = database.collection("services");
     const orderCollection = database.collection("bookings");
     const reviewCollection = database.collection("review");
     const usersCollection = database.collection("users");
@@ -37,13 +37,24 @@ async function run() {
       console.log(result);
       res.json(result);
     });
-
+    
+    
+  
     //GET ALL Review
     app.get("/review", async (req, res) => {
       const cursor = reviewCollection.find({});
       const review = await cursor.toArray();
       res.send(review);
     });
+
+
+    //GET ALL manage product
+    app.get("/product", async (req, res) => {
+      const cursor = servicesCollection.find({});
+      const product = await cursor.toArray();
+      res.send(product);
+    });
+
 
     //post api for insert Order
     app.post("/addOrder", async (req, res) => {
@@ -62,17 +73,26 @@ async function run() {
 
     //GET API for Home
     app.get("/services", async (req, res) => {
-      const cursor = BookingCollection.find({});
+      const cursor = servicesCollection.find({});
       const services = await cursor.toArray();
       res.send(services);
     });
 
+
+    //post api for Product add from services 
+    app.post("/addProduct", async (req, res) => {
+      const services = req.body;
+      const result = await servicesCollection.insertOne(services);
+     
+      res.json(result);
+    });
+    
     // GET Single Service id
     app.get("/services/:id", async (req, res) => {
       const id = req.params.id;
       console.log("getting specific service", id);
       const query = { _id: ObjectId(id) };
-      const service = await BookingCollection.findOne(query);
+      const service = await servicesCollection.findOne(query);
       res.json(service);
     });
 
@@ -90,12 +110,7 @@ async function run() {
       res.send(result);
     });
 
-    // add post for registration
-    // app.post("/users", async (req, res) => {
-    //   const users = req.body;
-    //   const result = await usersCollection.insertOne(users);
-    //   res.json(result);
-    // });
+    
 
     app.post("/addUserInfo", async (req, res) => {
       console.log("req.body");
