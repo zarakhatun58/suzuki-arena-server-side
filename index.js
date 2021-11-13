@@ -27,8 +27,18 @@ async function run() {
     const orderCollection = database.collection("bookings");
     const reviewCollection = database.collection("review");
     const usersCollection = database.collection("users");
-    // const ordersCollection = database.collection("orders");
+   
     
+
+// delete product
+app.delete("/product/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) };
+  const result = await servicesCollection.deleteOne(query);
+  res.json(result);
+});
+
+
 
     //post api for reviews insert
     app.post("/review", async (req, res) => {
@@ -120,37 +130,27 @@ async function run() {
     });
     //  make admin
 
-  app.put("/makeAdmin", async (req, res) => {
-    const filter = { email: req.body.email };
-    const result = await usersCollection.find(filter).toArray();
-    if (result) {
-      const documents = await usersCollection.updateOne(filter, {
-        $set: { role: "admin" },
-      });
-      console.log(documents);
-    }
-  });
+    app.put('/users/admin', async (req,res) =>{
+      const user = req.body;
+      console.log('put admin', user);
+      const filter = {email: user.email};
+      const updateDoc = {$set: {role: 'admin'}};
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.json(result);
+    })
    // check admin or not
-  app.get("/checkAdmin/:email", async (req, res) => {
-    const result = await usersCollection
-      .find({ email: req.params.email })
-      .toArray();
-    console.log(result);
-    res.send(result);
-  }); 
+   app.get("/users/:email", async (req, res) => {
+    const email = req.params.email;
+    const query = { email: email };
+    const user = await usersCollection.findOne(query);
+    let isAdmin = false;
+    if (user?.role === "admin") {
+      isAdmin = true;
+    }
+    res.json({ admin: isAdmin });
+  });
 
-    // admin make users to admin
-    // app.get("/users/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = { email: email };
-    //   const user = await usersCollection.findOne(query);
-    //   let isAdmin = false;
-
-    //   if (user?.role === "admin") {
-    //     isAdmin = true;
-    //   }
-    //   res.json({ admin: isAdmin });
-    // });
+    
 
     // show my all car Purchase
     app.get("/orders", async (req, res) => {
