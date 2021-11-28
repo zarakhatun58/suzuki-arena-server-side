@@ -5,10 +5,11 @@ const ObjectId = require("mongodb").ObjectId;
 const cors = require("cors");
 require("dotenv").config();
 
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 const app = express();
 const port = process.env.PORT || 5000;
 
-// middleware access from express
+// middleware
 app.use(cors());
 app.use(express.json());
 
@@ -27,18 +28,14 @@ async function run() {
     const orderCollection = database.collection("bookings");
     const reviewCollection = database.collection("review");
     const usersCollection = database.collection("users");
-   
-    
 
-// delete product
-app.delete("/product/:id", async (req, res) => {
-  const id = req.params.id;
-  const query = { _id: ObjectId(id) };
-  const result = await servicesCollection.deleteOne(query);
-  res.json(result);
-});
-
-
+    // delete product
+    app.delete("/product/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await servicesCollection.deleteOne(query);
+      res.json(result);
+    });
 
     //post api for reviews insert
     app.post("/review", async (req, res) => {
@@ -47,9 +44,7 @@ app.delete("/product/:id", async (req, res) => {
       console.log(result);
       res.json(result);
     });
-    
-    
-  
+
     //GET ALL Review
     app.get("/review", async (req, res) => {
       const cursor = reviewCollection.find({});
@@ -57,14 +52,12 @@ app.delete("/product/:id", async (req, res) => {
       res.send(review);
     });
 
-
     //GET ALL manage product
     app.get("/product", async (req, res) => {
       const cursor = servicesCollection.find({});
       const product = await cursor.toArray();
       res.send(product);
     });
-
 
     //post api for insert Order
     app.post("/addOrder", async (req, res) => {
@@ -88,19 +81,18 @@ app.delete("/product/:id", async (req, res) => {
       res.send(services);
     });
 
-
-    //post api for Product add from services 
+    //post api for Product add from services
     app.post("/addProduct", async (req, res) => {
       const services = req.body;
       const result = await servicesCollection.insertOne(services);
-     
+
       res.json(result);
     });
-    
+
     // GET Single Service id
     app.get("/services/:id", async (req, res) => {
       const id = req.params.id;
-      console.log("getting specific service", id);
+      //console.log("getting specific service", id);
       const query = { _id: ObjectId(id) };
       const service = await servicesCollection.findOne(query);
       res.json(service);
@@ -120,37 +112,41 @@ app.delete("/product/:id", async (req, res) => {
       res.send(result);
     });
 
-    
-
-    app.post("/addUserInfo", async (req, res) => {
-      console.log("req.body");
-      const result = await usersCollection.insertOne(req.body);
-      res.send(result);
-      console.log(result);
+    //post api for email password
+    app.post("/users", async (req, res) => {
+      const users = req.body;
+      const result = await usersCollection.insertOne(users);
+      res.json(result);
     });
+    // post api for users
+    // app.post("/addUserInfo", async (req, res) => {
+    //   console.log("req.body");
+    //   const addUserInfo = req.body;
+    //   const result = await usersCollection.insertOne(addUserInfo);
+    //   res.send(result);
+    //   console.log(result);
+    // });
     //  make admin
 
-    app.put('/users/admin', async (req,res) =>{
+    app.put("/users/admin", async (req, res) => {
       const user = req.body;
-      console.log('put admin', user);
-      const filter = {email: user.email};
-      const updateDoc = {$set: {role: 'admin'}};
+      console.log("put admin", user);
+      const filter = { email: user.email };
+      const updateDoc = { $set: { role: "admin" } };
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.json(result);
-    })
-   // check admin or not
-   app.get("/users/:email", async (req, res) => {
-    const email = req.params.email;
-    const query = { email: email };
-    const user = await usersCollection.findOne(query);
-    let isAdmin = false;
-    if (user?.role === "admin") {
-      isAdmin = true;
-    }
-    res.json({ admin: isAdmin });
-  });
-
-    
+    });
+    // check admin or not
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      let isAdmin = false;
+      if (user?.role === "admin") {
+        isAdmin = true;
+      }
+      res.json({ admin: isAdmin });
+    });
 
     // show my all car Purchase
     app.get("/orders", async (req, res) => {
@@ -177,6 +173,8 @@ app.delete("/product/:id", async (req, res) => {
       res.send(Booking);
     });
 
+    // get for payment
+
     //update status
     app.put("/update/:id", async (req, res) => {
       const id = req.params.id;
@@ -195,6 +193,21 @@ app.delete("/product/:id", async (req, res) => {
       );
       console.log("updating", id);
       res.json(result);
+    });
+    //for payment
+    app.post("/create-payment-intent", async (req, res) => {
+      const paymentInfo = req.body;
+      const amount = paymentInfo.price * 100;
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        
+        currency: "usd",
+        amount=amount,
+       payment_method_types: ['card']
+      });
+      res.json({
+        clientSecret: paymentIntent.client_secret
+      });
     });
   } finally {
     // await client.close();
